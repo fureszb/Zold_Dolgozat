@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <title>Dolgozat</title>
+    <style>
+        body {
+            padding-top: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .form-inline {
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .form-inline .form-group {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <div class="container">
+        <div class="header">
+            <h1>Kizöldítjük a Földet!</h1>
+        </div>
+
+        <form id="bejegyzesForm" class="form-inline">
+            <div class="form-group">
+                <input type="text" id="tevekenyseg_id" class="form-control" placeholder="tevekenyseg_id" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="osztaly_id" class="form-control" placeholder="osztaly_id" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="allapot" class="form-control" placeholder="allapot: 0/1" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Bejegyzés Hozzáadása</button>
+        </form>
+
+        <form id="bejegyzesForm" class="form-inline">
+            <div class="form-group">
+                <select id="tevekenyseg_id" class="form-control" required>
+
+                </select>
+            </div>
+            <div class="form-group">
+                <select id="osztaly_id" class="form-control" required>
+
+                </select>
+            </div>
+            <div class="form-group">
+                <select id="allapot" class="form-control" required>
+                    <option value="0">Elutasítva</option>
+                    <option value="1">Jóváhagyásra vár</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Bejegyzés Hozzáadása</button>
+        </form>
+
+
+        <h2>Bejegyzések Listája</h2>
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Osztály</th>
+                    <th>Tevékenység</th>
+                    <th>Pont</th>
+                    <th>Státusz</th>
+                </tr>
+            </thead>
+            <tbody id="bejegyzesList"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const apiURL = 'http://127.0.0.1:8000/api/bejegyzes';
+
+        async function fetchBejegyzes() {
+            try {
+                const response = await fetch(apiURL);
+                const data = await response.json();
+                const list = document.getElementById('bejegyzesList');
+                list.innerHTML = '';
+
+                data.bejegyzesek.forEach(bejegyzes => {
+                    const tevekenyseg = data.tevekenysegek.find(t => t.tevekenyseg_id === bejegyzes.tevekenyseg_id);
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td>${tevekenyseg ? 'nsz' + bejegyzes.osztaly_id : 'Ismeretlen'}</td>
+                        <td>${tevekenyseg ? tevekenyseg.tevekenyseg_nev : 'Ismeretlen'}</td>
+                        <td>${tevekenyseg ? tevekenyseg.pontszam : '-'}</td>
+                        <td>${bejegyzes.allapot === 1 ? 'jóváhagyásra vár' : 'elutasítva'}</td>
+                    `;
+
+                    list.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Hiba történt: ', error);
+            }
+        } fetchBejegyzes();
+
+
+
+        function showEditForm(id, name, country) {
+            editingId = id;
+            console.log(id)
+        }
+
+
+        function createBejegyzes(bejegyzeseData) {
+            fetch(apiURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(bejegyzeseData),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Létrehozva: ', data);
+                    fetchBejegyzes();
+                })
+                .catch(error => console.error('Hiba történt: ', error));
+        }
+
+        document.getElementById('bejegyzesForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const bejegyzeseData = {
+                tevekenyseg_id: document.getElementById('tevekenyseg_id').value,
+                osztaly_id: document.getElementById('osztaly_id').value,
+                allapot: document.getElementById('allapot').value
+            };
+            createBejegyzes(bejegyzeseData);
+
+            document.getElementById('tevekenyseg_id').value = '';
+            document.getElementById('osztaly_id').value = '';
+            document.getElementById('allapot').value = '';
+        });
+
+
+
+
+    </script>
+</body>
+
+</html>
